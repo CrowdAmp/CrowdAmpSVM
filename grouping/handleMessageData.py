@@ -100,6 +100,10 @@ def displayTopFive(influencerName, phrase, messageid, otherId):
 	while categoryText not in validCategories:
 		#quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
 		categoryText = raw_input("Enter category, 100 if none of the above: ")
+		if categoryText == 'q':
+			return 'q'
+		if categoryText == 'u':
+			return 'u'
 	index = int(categoryText)
 	if index == 100 or index >= len(comparisonPhrases):
 		phrasegroupid = otherId
@@ -116,6 +120,7 @@ def displayTopFive(influencerName, phrase, messageid, otherId):
 	executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE phraseids SET numusers = numusers + 1 WHERE id = " + str(phrasegroupid) + ";"
 	executeDBCommand(conn, cur, queryStr)
+	return 0
 
 # Returns id of the uncategorized group	
 def getUncategorized(conn, cur, influencerName):
@@ -399,12 +404,14 @@ def groupQuestions():
 		#print 'Context:' + messageinfo[0][5]
 		#print messageinfo[0][1] + '\n'	
 		# Select and display top 5
-			displayTopFive(influencerName, messageinfo[0][1], mid, otherId)
-		quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
-		if quit == "q":
-			break
-		elif quit == "u":
-			recategorizePrevious(conn, cur)
+			quit = displayTopFive(influencerName, messageinfo[0][1], mid, otherId)
+		#quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
+			if quit == 'q':
+				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+				break
+			elif quit == 'u':
+				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+				recategorizePrevious(conn, cur)
 	
 
 def addNewCategory():
@@ -419,8 +426,11 @@ def addNewCategory():
 	executeDBCommand(conn, cur, queryStr)
 	info = cur.fetchall()
 	phrasegroup = info[0][0]	
-	responseText = raw_input("Response Text ('none' to leave empty): ")
-	queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", DEFAULT, 'text', '" + influencerName + "');"
+	responseText = raw_input("Response Text (press enter to leave empty): ")
+	if responseText == '':
+		return
+	responseText = responseText.replace("'", "''")
+	queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", '" + responseText +"',DEFAULT, 'text', '" + influencerName + "');"
 	executeDBCommand(conn, cur, queryStr)
 	
 
@@ -601,6 +611,29 @@ def retrainModel():
 	baseline(categories, influencerName)
 		
 
+def updateResponse():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	dbdata = getMatches(conn, cur, influencerName, 'NULL')
+	validids = []
+	for row in dbdata:
+		print str(row[0]) + ": " + row[1]
+		validids.append(str(row[0]))
+	responseid = raw_input("Input id to change: ")
+	if responseid not in validids:
+		print 'Not a valid id'
+		return
+	responseText = raw_input("Input phrase to add: ")
+	responseText.replace("'", "''")
+	queryStr = "UPDATE responses SET qid = -1 WHERE qid = " + responseid + ";"
+	executeDBCommand(conn, cur, queryStr)
+	queryStr = "INSERT INTO responses VALUES (" + responseid + ", '" + responseText + "', DEFAULT, 'text', '" + influencerName + "');" 
+	executeDBCommand(conn, cur, queryStr)
+
+
 def printOptions():
 	print "0: View all messages"
 	print "1: Add new category"
@@ -617,7 +650,8 @@ def printOptions():
 	print "12: Input number of user to send image"
 	print "13: Supervise automated selections"
 	print "14: Retrain model"
-	print "15: Trust Model\n"
+	print "15: Trust Model"
+	print "16: Update Response\n"
 	
 
 if __name__ == '__main__':
@@ -664,6 +698,8 @@ if __name__ == '__main__':
 			retrainModel()
 		elif category == "15":
 			trustModel()
+		elif category == "16":
+			updateResponse()
 		else:
 			break
 

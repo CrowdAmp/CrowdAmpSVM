@@ -676,12 +676,14 @@ def textGroup():
 	print userids
 	print len(userids)
 	inputContent = raw_input("Enter phrase to send: ")
-	for userid in userids:
-		data = { "content" : inputContent, "influencerId" : influencerName, "type": "text", "userId" : userid, "mediaDownloadUrl" : ""}
-		url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
-		headers = {'content-type': 'application/json'}
-		print data
-		requests.post(url, data=json.dumps(data), headers=headers)
+	approval = raw_input("are you sure? ('y' to confirm): ")
+	if approval == 'y':
+		for userid in userids:
+			data = { "content" : inputContent, "influencerId" : influencerName, "type": "text", "userId" : userid, "mediaDownloadUrl" : ""}
+			url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+			headers = {'content-type': 'application/json'}
+			print data
+			requests.post(url, data=json.dumps(data), headers=headers)
 
 
 def updateResponse():

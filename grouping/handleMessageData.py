@@ -213,8 +213,12 @@ def showSuggestion(predictedPhrasegroup, row):
 	print "Displaying Predicted classification below"
 	print "Sentence: " + row[1]
 	print "Category: " + info[0][0]
-	approval = raw_input("Type 'y' to confirm, u to undo, q to quit anything else to reject: ")
+	approval = raw_input("Type 'y' to confirm, u to undo, q to quit, a to add to new category, anything else to reject: ")
 	print "\n"
+	if approval == 'a':
+		phrasegroup = addNewCategory()
+		assignToGroup(row[0], phrasegroup, 24, row[3], row[2])
+		return 'a'
 	if approval == 'y':
 		return row[0]
 	elif approval == 'q':
@@ -244,6 +248,7 @@ def manualEdit(conn, cur, influencerName, messageinfo, mid):
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE userid = '" + messageinfo[0][3] + "' AND phrasegroup = "+ str(uncategorizedId) +";"
 	executeDBCommand(conn, cur, queryStr)
 	mid = printFullConversation(conn, cur, messageinfo, True)
+	
 	#if mid != -1:
 	displayTopFive(influencerName, messageinfo[0][1], mid, otherId)
 
@@ -277,6 +282,8 @@ def suggestGroup(conn, cur, influencerName, messageinfo, model, vectorizer):
 		#index = len(info) - 1 - i
 		if info[i][7] == 'True':
 			editId = showSuggestion(predicted[i], info[i])
+			if editId == 'a':
+				return 'a'
 			if editId == 'q':
 				return 'q'
 			elif editId == 'u':
@@ -322,12 +329,13 @@ def checkExactMatch(conn, cur, influencerName, messageinfo):
 	queryStr = "SELECT phrasecategories FROM phraseids where id = " + str(phrasegroup) + ";"
 	executeDBCommand(conn, cur, queryStr)
 	info = cur.fetchall()
-	response = info[0][0]
-	print 'Exact match found in previous records.'
-	print 'Assigning: ' + lastMessage[0][1]
-	print 'To: ' + response
-	print 'Messageid: ' + str(lastMessage[0][0]) + '\n'
-	assignToGroup(lastMessage[0][0], phrasegroup, uncategorizedId, userid, influencerName)
+	if len(info) > 0:
+		response = info[0][0]
+		print 'Exact match found in previous records.'
+		print 'Assigning: ' + lastMessage[0][1]
+		print 'To: ' + response
+		print 'Messageid: ' + str(lastMessage[0][0]) + '\n'
+		assignToGroup(lastMessage[0][0], phrasegroup, uncategorizedId, userid, influencerName)
 	return phrasegroup
 
 def requeueMessage(conn, cur, messageid, uncategorizedId):
@@ -428,10 +436,11 @@ def addNewCategory():
 	phrasegroup = info[0][0]	
 	responseText = raw_input("Response Text (press enter to leave empty): ")
 	if responseText == '':
-		return
+		return phrasegroup
 	responseText = responseText.replace("'", "''")
 	queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", '" + responseText +"',DEFAULT, 'text', '" + influencerName + "');"
 	executeDBCommand(conn, cur, queryStr)
+	return phrasegroup
 	
 
 def displayUnprocessedMessages():

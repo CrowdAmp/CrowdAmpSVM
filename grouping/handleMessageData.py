@@ -547,6 +547,24 @@ def sendImageToSingleNumber():
 	headers = {'content-type': 'application/json'}
 	requests.post(url, data=json.dumps(data), headers=headers)
 
+def showCategories(conn, cur, influencerName):
+	dbdata = getMatches(conn, cur, influencerName, 'NULL')
+	comparisonPhrases = [dbdata[i][1] for i in range(0, len(dbdata))]
+
+def printContext(conn, cur, mid, influencerName):
+	queryStr = "SELECT * FROM unprocessedmessages WHERE id = " + str(mid) + ";"
+	executeDBCommand(conn, cur, queryStr)
+	users = cur.fetchall()
+	user = users[0][3]
+	queryStr = "SELECT * FROM unprocessedmessages WHERE userid = '" + user + "' AND influencerid = '"+ influencerName+"' ORDER BY timesent desc LIMIT 3;"
+	executeDBCommand(conn, cur, queryStr)
+	info = cur.fetchall()
+	print "PRINTING CONTEXT"
+	print info[2][1]
+	print info[1][1]
+	print info[0][1]
+
+
 def trustModel():
 	influencerName = promptForInfluencerName()
 	filename = influencerName + ".p"
@@ -605,7 +623,8 @@ def trustModel():
 			print info[i][1]
 	print '\n'
 	for i in range(0, len(messageids)):
-		print messagetext[i]
+		printContext(conn, cur, messageids[i], influencerName)
+		print "\n" + str(messageids[i]) + ": " + messagetext[i]
 		accept = raw_input("Type 'n' to reject, anything else to accept: ")
 		if accept != 'n':
 			queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroupid) + " WHERE id = " + str(messageids[i]) + ";"	
@@ -613,6 +632,11 @@ def trustModel():
 		print '\n'
 	print str(len(messageids)) + " messages categorized as: " + str(phrasegroupid)
 
+def findInCategory():
+	global cur
+	global conn
+	queryStr = "SELECT * FROM unprocessedmessages WHERE = " + str(phrasegroupid) + " WHERE id = " + str(messageids[i]) + ";"	
+	
 
 def retrainModel():
 	influencerName = promptForInfluencerName()
@@ -660,7 +684,8 @@ def printOptions():
 	print "13: Supervise automated selections"
 	print "14: Retrain model"
 	print "15: Trust Model"
-	print "16: Update Response\n"
+	print "16: Update Response"
+	print "17: Find Exact Matches\n"
 	
 
 if __name__ == '__main__':
@@ -709,6 +734,8 @@ if __name__ == '__main__':
 			trustModel()
 		elif category == "16":
 			updateResponse()
+		elif category == "17":
+			findInCategory()
 		else:
 			break
 

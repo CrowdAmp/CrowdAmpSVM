@@ -625,7 +625,10 @@ def trustModel():
 	for i in range(0, len(messageids)):
 		printContext(conn, cur, messageids[i], influencerName)
 		print "\n" + str(messageids[i]) + ": " + messagetext[i]
-		accept = raw_input("Type 'n' to reject, anything else to accept: ")
+		accept = raw_input("Type 'n' to reject, anything else to accept, q to quit: ")
+		if accept == 'q':
+			print 'Exiting categorizing, previous categorizations all saved'
+			return
 		if accept != 'n':
 			queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroupid) + " WHERE id = " + str(messageids[i]) + ";"	
 			executeDBCommand(conn, cur, queryStr)

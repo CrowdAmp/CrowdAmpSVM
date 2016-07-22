@@ -645,7 +645,44 @@ def retrainModel():
 	influencerName = promptForInfluencerName()
 	categories = [i for i in range(200)]
 	baseline(categories, influencerName)
+
+def promptCategory(influencerName):
+	validCategories = [str(i) for i in range(0, 101)]
+	dbdata = getMatches(conn, cur, influencerName, 'NULL')
+	comparisonPhrases = [dbdata[i][1] for i in range(0, len(dbdata))]
+	for i in range(0, len(comparisonPhrases)):
+		print str(i) + ': ' + comparisonPhrases[i]
+	print '\n'
+	categoryText = "-1"
+	while categoryText not in validCategories:
+		#quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
+		categoryText = raw_input("Enter category: ")
+	index = int(categoryText)
+	phrasegroupid = dbdata[index][0]
+	return phrasegroupid
 		
+def textGroup():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	phrasegroupid = promptCategory(influencerName)
+	queryStr = "SELECT userid FROM unprocessedmessages WHERE phrasegroup = " + str(phrasegroupid) + ";"
+	executeDBCommand(conn, cur, queryStr)
+	info = cur.fetchall()
+	userids = []
+	for row in info:
+		if row[0] not in userids:
+			userids.append(row[0])
+	print userids
+	print len(userids)
+	inputContent = raw_input("Enter phrase to send: ")
+	for userid in userids:
+		data = { "content" : inputContent, "influencerId" : influencerName, "type": "text", "userId" : userid, "mediaDownloadUrl" : ""}
+		url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+		headers = {'content-type': 'application/json'}
+		print data
+		requests.post(url, data=json.dumps(data), headers=headers)
+
 
 def updateResponse():
 	global conn
@@ -688,7 +725,7 @@ def printOptions():
 	print "14: Retrain model"
 	print "15: Trust Model"
 	print "16: Update Response"
-	print "17: Find Exact Matches\n"
+	print "17: Text Numbers for Specific Group\n"
 	
 
 if __name__ == '__main__':
@@ -738,7 +775,7 @@ if __name__ == '__main__':
 		elif category == "16":
 			updateResponse()
 		elif category == "17":
-			findInCategory()
+			textGroup()
 		else:
 			break
 

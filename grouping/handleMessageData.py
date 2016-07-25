@@ -421,6 +421,37 @@ def groupQuestions():
 				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
 				recategorizePrevious(conn, cur)
 	
+def groupNewUsers():
+	global conn
+	global cur
+	print '\nEnter number that corresponds to question group\n'
+	influencerName = promptForInfluencerName()
+	print '\n'
+	if influencerName == "-1":
+		return
+	uncategorizedId = getUncategorized(conn, cur, influencerName)
+	otherId = getOtherId(conn, cur, influencerName)
+	#update unprocessedmessages set phrasegroup = -1 where id = (select id from unprocessedmessages where influencerid = 'ChantellePaige' AND phrasegroup = 24 AND userid = (select userid from unprocessedmessages where influencerid = 'ChantellePaige' group by userid having count(*) < 4 limit 1) order by timesent limit 1) returning *;
+	while True:
+		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE influencerid = '" + influencerName + "' AND phrasegroup = 24 AND userid = (SELECT userid FROM unprocessedmessages WHERE influencerid = '" + influencerName + "' GROUP BY userid HAVING COUNT (*) < 4 LIMIT 1) ORDER BY timesent LIMIT 1) RETURNING *;"
+		executeDBCommand(conn, cur, queryStr)
+		messageinfo = cur.fetchall()
+		if len(messageinfo) == 0:
+			print 'No more uncategorized messages for this influencer \n'
+			break
+		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE userid = '" + messageinfo[0][3] + "' AND phrasegroup = "+ str(uncategorizedId) +";"
+		executeDBCommand(conn, cur, queryStr)
+		mid = printFullConversation(conn, cur, messageinfo, True)
+		if mid != -1:
+			quit = displayTopFive(influencerName, messageinfo[0][1], mid, otherId)
+		#quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
+			if quit == 'q':
+				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+				break
+			elif quit == 'u':
+				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+				recategorizePrevious(conn, cur)
+
 
 def addNewCategory():
 	global conn
@@ -727,7 +758,8 @@ def printOptions():
 	print "14: Retrain model"
 	print "15: Trust Model"
 	print "16: Update Response"
-	print "17: Text Numbers for Specific Group\n"
+	print "17: Text Numbers for Specific Group"
+	print "18: Group New Users \n"
 	
 
 if __name__ == '__main__':
@@ -778,6 +810,8 @@ if __name__ == '__main__':
 			updateResponse()
 		elif category == "17":
 			textGroup()
+		elif category == "18":
+			groupNewUsers()
 		else:
 			break
 

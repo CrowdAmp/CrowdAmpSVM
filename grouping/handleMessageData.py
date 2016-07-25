@@ -504,7 +504,7 @@ def textOne():
 	print dbdata[0][1]
 	print userid
 	inputContent = raw_input("Enter phrase to send: ")
-	data = { "content" : inputContent, "influencerId" : "electionfails", "type": "text", "userId" : userid, "mediaDownloadUrl" : ""}
+	data = { "content" : inputContent, "influencerId" : "morggkatherinee", "type": "text", "userId" : userid, "mediaDownloadUrl" : ""}
 	url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
 	headers = {'content-type': 'application/json'}
 	requests.post(url, data=json.dumps(data), headers=headers)

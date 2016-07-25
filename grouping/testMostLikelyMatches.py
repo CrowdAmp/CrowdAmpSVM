@@ -96,7 +96,7 @@ def getMatches(conn, cur, influencerid, messageContent):
     	#port=5432
 	#)
 	#cur = conn.cursor()
-	queryStr = "SELECT * FROM phraseids WHERE influencerid = '" + influencerid + "' AND catchallcategory = 'N' ORDER BY id desc;"
+	queryStr = "SELECT * FROM phraseids WHERE influencerid = '" + influencerid + "' AND catchallcategory = 'N' ORDER BY id;"
 	cur.execute(queryStr)
 	conn.commit()
 	

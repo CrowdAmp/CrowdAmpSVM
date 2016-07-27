@@ -114,8 +114,8 @@ def displayTopFive(influencerName, phrase, messageid, otherId):
 	previousResponses = cur.fetchall()
 	previousPhrasegroups = [previousResponses[i][0] for i in range(0, len(previousResponses))]
 	if phrasegroupid in previousPhrasegroups:
-		print "That response has already been used, classifying as other"
-		phrasegroupid = otherId
+		print "FYI That response has already been used"
+		#phrasegroupid = otherId
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroupid) + " WHERE id = " + str(messageid) + ";"
 	executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE phraseids SET numusers = numusers + 1 WHERE id = " + str(phrasegroupid) + ";"
@@ -433,11 +433,11 @@ def groupNewUsers():
 	otherId = getOtherId(conn, cur, influencerName)
 	#update unprocessedmessages set phrasegroup = -1 where id = (select id from unprocessedmessages where influencerid = 'ChantellePaige' AND phrasegroup = 24 AND userid = (select userid from unprocessedmessages where influencerid = 'ChantellePaige' group by userid having count(*) < 4 limit 1) order by timesent limit 1) returning *;
 	while True:
-		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE influencerid = '" + influencerName + "' AND phrasegroup = 24 AND userid = (SELECT userid FROM unprocessedmessages WHERE influencerid = '" + influencerName + "' GROUP BY userid HAVING COUNT (*) < 4 LIMIT 1) ORDER BY timesent LIMIT 1) RETURNING *;"
+		queryStr = "SELECT DISTINCT * FROM unprocessedmessages WHERE influencerid = '" + influencerName + "' AND userid NOT IN (SELECT DISTINCT userid FROM unprocessedmessages WHERE sentbyuser = 'False' and influencerid = '" + influencerName + "') LIMIT 1;"
 		executeDBCommand(conn, cur, queryStr)
 		messageinfo = cur.fetchall()
 		if len(messageinfo) == 0:
-			print 'No more uncategorized messages for this influencer \n'
+			print 'No more uncategorized messages from NEW USERS for this influencer \n'
 			break
 		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE userid = '" + messageinfo[0][3] + "' AND phrasegroup = "+ str(uncategorizedId) +";"
 		executeDBCommand(conn, cur, queryStr)

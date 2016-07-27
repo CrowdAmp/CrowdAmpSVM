@@ -452,6 +452,32 @@ def groupNewUsers():
 				requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
 				recategorizePrevious(conn, cur)
 
+def displayResponses(conn, cur, influencerName):
+	queryStr = "SELECT * FROM phraseids WHERE influencerid = '" + influencerName + "' ORDER BY id;"
+	executeDBCommand(conn, cur, queryStr)
+	categories = cur.fetchall()
+
+	queryStr = "SELECT * FROM responses WHERE influencername = '" + influencerName + " 'ORDER BY id;"
+	executeDBCommand(conn, cur, queryStr)
+	responses = cur.fetchall()
+
+	for category in categories: 
+		print 'Phraseid: ' + str(category[0])
+		print 'Group: ' + category[1]
+		for response in responses:
+			if response[0] == category[0]:
+				print 'Response: ' + response[1]
+				break
+		print "\n"
+
+def changeCategoryText():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	action = raw_input("Type 'a' to add another response to existing category or 'c' to change response for existing category: ")
+	displayResponses(conn, cur, influencerName)
 
 def addNewCategory():
 	global conn
@@ -459,18 +485,26 @@ def addNewCategory():
 	influencerName = promptForInfluencerName()
 	if influencerName == "-1":
 		return
+	categoryType = raw_input("Enter 1 for image anything else otherwise: ")
 	categoryText = raw_input("Enter new category phrase: ")
 	categoryText = categoryText.replace("'", "''")
 	queryStr = "INSERT INTO phraseids VALUES (DEFAULT, '" + categoryText + "', '" + influencerName + "', DEFAULT, 'N', DEFAULT, 'N') RETURNING id;"
 	executeDBCommand(conn, cur, queryStr)
 	info = cur.fetchall()
 	phrasegroup = info[0][0]	
-	responseText = raw_input("Response Text (press enter to leave empty): ")
-	if responseText == '':
-		return phrasegroup
-	responseText = responseText.replace("'", "''")
-	queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", '" + responseText +"',DEFAULT, 'text', '" + influencerName + "');"
-	executeDBCommand(conn, cur, queryStr)
+	if categoryType != '1':
+		responseText = raw_input("Response Text (press enter to leave empty): ")
+		if responseText == '':
+			return phrasegroup
+		responseText = responseText.replace("'", "''")
+		queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", '" + responseText +"',DEFAULT, 'text', '" + influencerName + "');"
+		executeDBCommand(conn, cur, queryStr)
+	else: 
+		imageUrl = raw_input("Image url: ")
+		imageName = raw_input("Image name: ")
+		queryStr = "INSERT INTO responses VALUES (" + str(phrasegroup) + ", '" + imageName + "',DEFAULT, 'image', '" + influencerName + "', DEFAULT, DEFAULT,'" + imageUrl + "');"
+		executeDBCommand(conn, cur, queryStr)
+	print "Entered new category, phrasegroup:", phrasegroup
 	return phrasegroup
 	
 
@@ -759,7 +793,8 @@ def printOptions():
 	print "15: Trust Model"
 	print "16: Update Response"
 	print "17: Text Numbers for Specific Group"
-	print "18: Group New Users \n"
+	print "18: Group New Users"
+	print "19: Change Category Text\n"
 	
 
 if __name__ == '__main__':
@@ -812,6 +847,8 @@ if __name__ == '__main__':
 			textGroup()
 		elif category == "18":
 			groupNewUsers()
+		elif category == "19":
+			changeCategoryText()
 		else:
 			break
 

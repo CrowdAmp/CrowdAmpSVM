@@ -457,7 +457,7 @@ def displayResponses(conn, cur, influencerName):
 	executeDBCommand(conn, cur, queryStr)
 	categories = cur.fetchall()
 
-	queryStr = "SELECT * FROM responses WHERE influencername = '" + influencerName + " 'ORDER BY id;"
+	queryStr = "SELECT * FROM responses WHERE influencername = '" + influencerName + "' ORDER BY qid;"
 	executeDBCommand(conn, cur, queryStr)
 	responses = cur.fetchall()
 
@@ -467,8 +467,91 @@ def displayResponses(conn, cur, influencerName):
 		for response in responses:
 			if response[0] == category[0]:
 				print 'Response: ' + response[1]
-				break
-		print "\n"
+		print '\n'
+	return categories, responses
+
+def deleteResponse(conn, cur, responses, phraseid, influencerName):
+	responsePhrases = []
+	for response in responses:
+		if response[0] == phraseid: 	
+			responsePhrases.append(response[1])
+	index = 0
+	validIndices = []
+	for r in responsePhrases:
+		validIndices.append(str(index))
+		print str(index) + ": " + r
+		index += 1
+	deleteAll = raw_input("Type 'deleteall' to delete all listed responses or select index of response to delete: ")
+	if deleteAll == 'deleteall':
+		queryStr = "DELETE FROM responses WHERE qid = " + str(phraseid) + ";"
+		executeDBCommand(conn, cur, queryStr)
+	elif deleteAll not in validIndices:
+		print 'Invalid index'
+		return
+	else:
+		rindex = int(deleteAll)
+		refPhrase = responsePhrases[rindex]
+		refPhrase = refPhrase.replace("'", "''")
+		queryStr = "DELETE FROM responses WHERE influencername = '" + influencerName + "' AND response = '" + refPhrase + "';" 
+		executeDBCommand(conn, cur, queryStr)
+		
+def changeResponse(conn, cur, responses, phraseid, influencerName):
+	responsePhrases = []
+	for response in responses:
+		if response[0] == phraseid: 	
+			responsePhrases.append(response[1])
+	index = 0
+	validIndices = []
+	for r in responsePhrases:
+		validIndices.append(str(index))
+		print str(index) + ": " + r
+		index += 1
+	phraseindex = raw_input("Select index of response to change: ")
+	if phraseindex not in validIndices:
+		print 'Invalid index'
+		return
+	else:
+		phraseType = raw_input("Type 'i' to input image, anything else for text: ")
+		rindex = int(phraseindex)
+		refPhrase = responsePhrases[rindex]
+		refPhrase = refPhrase.replace("'", "''")
+		if phraseType != 'i':
+			newPhrase = raw_input("Type new text: ")
+			newPhrase = newPhrase.replace("'", "''")
+			queryStr = "UPDATE responses SET response = '" + newPhrase + "' WHERE influencername = '" + influencerName + "' AND response = '" + refPhrase + "';"
+			executeDBCommand(conn, cur, queryStr)
+		else:
+			imageUrl = raw_input("Image url: ")
+			imageName = raw_input("Image name: ")
+			queryStr = "UPDATE responses SET response = '" + imageName + "' WHERE influencername = '" + influencerName + "' AND response = '" + refPhrase + "';" 
+			executeDBCommand(conn, cur, queryStr)
+			queryStr = "UPDATE responses SET mediadownloadurl = '" + imageUrl + "' WHERE influencername = '" + influencerName + "' AND response = '" + refPhrase + "';" 
+			executeDBCommand(conn, cur, queryStr)
+			
+	
+def addResponse(conn, cur, responses, phraseid, influencerName):
+	responsePhrases = []
+	for response in responses:
+		if response[0] == phraseid: 	
+			responsePhrases.append(response[1])
+	index = 0
+	validIndices = []
+	for r in responsePhrases:
+		validIndices.append(str(index))
+		print str(index) + ": " + r
+		index += 1
+
+	phraseType = raw_input("Type 'i' to input image, anything else for text: ")
+	if phraseType != 'i':
+		newPhrase = raw_input("Type new text: ")
+		newPhrase = newPhrase.replace("'", "''")
+		queryStr = "INSERT INTO responses VALUES (" + str(phraseid) + ", '" + newPhrase +"',DEFAULT, 'text', '" + influencerName + "');"
+		executeDBCommand(conn, cur, queryStr)
+	else:
+		imageUrl = raw_input("Image url: ")
+		imageName = raw_input("Image name: ")
+		queryStr = "INSERT INTO responses VALUES (" + str(phraseid) + ", '" + imageName + "',DEFAULT, 'image', '" + influencerName + "', DEFAULT, DEFAULT,'" + imageUrl + "');"
+		executeDBCommand(conn, cur, queryStr)
 
 def changeCategoryText():
 	global conn
@@ -476,8 +559,23 @@ def changeCategoryText():
 	influencerName = promptForInfluencerName()
 	if influencerName == "-1":
 		return
-	action = raw_input("Type 'a' to add another response to existing category or 'c' to change response for existing category: ")
-	displayResponses(conn, cur, influencerName)
+	action = raw_input("Type 'a' to add another response to existing category, 'c' to change response for existing category, 'd' to delete a response: ")
+	categories, responses = displayResponses(conn, cur, influencerName)
+	validIds = [str(categories[i][0]) for i in range(0, len(categories))]
+	print validIds
+	phrasegroup = -10
+	while phrasegroup not in validIds:
+		phrasegroup = raw_input("Enter valid phraseid from those listed above: ")
+	phraseid = int(phrasegroup)
+	if action == 'd':
+		deleteResponse(conn, cur, responses, phraseid, influencerName)
+		print "Response deleted \n"
+	if action == 'c':
+		changeResponse(conn, cur, responses, phraseid, influencerName)
+		print "Reponse Changed\n"
+	if action == 'a':
+		addResponse(conn, cur, responses, phraseid, influencerName)
+		print "Response Added\n"
 
 def addNewCategory():
 	global conn

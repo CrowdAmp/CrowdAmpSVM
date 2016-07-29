@@ -881,6 +881,40 @@ def textGroup():
 			print data
 			requests.post(url, data=json.dumps(data), headers=headers)
 
+def sendPosTwitter(conn, cur, category, influencerName, status):
+	queryStr = "SELECT userid FROM unprocessedmessages WHERE phrasegroup = " + category + ";"
+	executeDBCommand(conn, cur, queryStr)
+	users = cur.fetchall()
+	for user in users:
+		twitterID = user[0]
+		url = 'https://peaceful-mountain-72739.herokuapp.com/updateTwitterAuthorization/' + influencerName + '/' + twitterID + '/' + status
+		requests.get(url)
+		print 'Posting ' + url
+
+
+def tweet():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	queryStr = "SELECT * FROM phraseids WHERE influencerid = '" + influencerName + "' ORDER BY id;"
+	executeDBCommand(conn, cur, queryStr)
+	info = cur.fetchall()
+	valid = [str(info[i][0]) for i in range(0, len(info))]
+	valid.append("100")
+	for i in range(0, len(info)):
+		print str(info[i][0]) + ": " + info[i][1]
+	category = 'a'
+	while category not in valid:
+		category = raw_input("Enter phraseid to mark as positive, 100 if none: ")
+	if category != "100":
+		sendPosTwitter(conn, cur, category, influencerName, 'true')
+	category2 = 'b'
+	while category2 not in valid:
+		category2 = raw_input("Enter phraseid to mark as negative, 100 if none: ")
+	if category2 != "100":
+		sendPosTwitter(conn, cur, category2, influencerName, 'false')
 
 def updateResponse():
 	global conn
@@ -926,7 +960,8 @@ def printOptions():
 	print "17: Text Numbers for Specific Group"
 	print "18: Group New Users"
 	print "19: Change Category Text"
-	print "20: Add alternative response\n"
+	print "20: Add alternative response"
+	print "21: Tweet\n"
 	
 
 if __name__ == '__main__':
@@ -983,6 +1018,8 @@ if __name__ == '__main__':
 			changeCategoryText()
 		elif category == "20":
 			addAltCategory()
+		elif category == "21":
+			tweet()
 		else:
 			break
 

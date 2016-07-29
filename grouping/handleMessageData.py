@@ -115,7 +115,9 @@ def displayTopFive(influencerName, phrase, messageid, otherId):
 	previousPhrasegroups = [previousResponses[i][0] for i in range(0, len(previousResponses))]
 	if phrasegroupid in previousPhrasegroups:
 		print "FYI That response has already been used"
-		#phrasegroupid = otherId
+		#phrasegroupid = otherId Set usealternative to 'True'
+		queryStr = "UPDATE unprocessedmessages SET usealternative = 'True' WHERE id = " + str(messageid) + ";"
+		executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroupid) + " WHERE id = " + str(messageid) + ";"
 	executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE phraseids SET numusers = numusers + 1 WHERE id = " + str(phrasegroupid) + ";"
@@ -235,8 +237,8 @@ def assignToGroup(messageid, phrasegroup, uncategorizedId, userid, influencerNam
 	previousResponses = cur.fetchall()
 	previousPhrasegroups = [previousResponses[i][0] for i in range(0, len(previousResponses))]
 	if phrasegroup in previousPhrasegroups and phrasegroup != otherId and phrasegroup != uncategorizedId:
-		print "That response has already been used, classifying as other"
-		phrasegroupid = otherId
+		print "FYI that response has already been used"
+		#phrasegroupid = otherId
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE phrasegroup = " + str(uncategorizedId) + " AND userid = '"+ userid +"';"
 	executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroup) + " WHERE id = " + str(messageid) + ";"
@@ -469,6 +471,37 @@ def displayResponses(conn, cur, influencerName):
 				print 'Response: ' + response[1]
 		print '\n'
 	return categories, responses
+
+def addAltCategory():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	queryStr = "SELECT * FROM phraseids WHERE influencerid = '" + influencerName + "' ORDER BY id;"
+	executeDBCommand(conn, cur, queryStr)
+	info = cur.fetchall()
+	valid = [str(info[i][0]) for i in range(0, len(info))]
+	for i in range(0, len(info)):
+		print str(info[i][0]) + ": " + info[i][1]
+	category = raw_input("Enter phraseid to change: ")
+	while category not in valid:
+		category = raw_input("Enter phraseid to change: ")
+	messageType = raw_input("Enter 'i' for image, anything else for text: ")
+	if messageType != 'i':
+		text = raw_input("Enter text: ")
+		text = text.replace("'", "''")
+
+		queryStr = "INSERT INTO overflowresponses VALUES (" + category + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, DEFAULT);"
+		executeDBCommand(conn, cur, queryStr)
+	else:
+		imageName = raw_input("Image Name: ")
+		url = raw_input("Image URL: ")
+		queryStr = "INSERT INTO overflowresponses VALUES (" + category + ", '" + imageName + "', DEFAULT, 'text', '" + influencerName + "', '" + url + "', DEFAULT);"
+		executeDBCommand(conn, cur, queryStr)
+
+
+	
 
 def deleteResponse(conn, cur, responses, phraseid, influencerName):
 	responsePhrases = []
@@ -892,7 +925,8 @@ def printOptions():
 	print "16: Update Response"
 	print "17: Text Numbers for Specific Group"
 	print "18: Group New Users"
-	print "19: Change Category Text\n"
+	print "19: Change Category Text"
+	print "20: Add alternative response\n"
 	
 
 if __name__ == '__main__':
@@ -947,6 +981,8 @@ if __name__ == '__main__':
 			groupNewUsers()
 		elif category == "19":
 			changeCategoryText()
+		elif category == "20":
+			addAltCategory()
 		else:
 			break
 

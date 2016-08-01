@@ -239,6 +239,8 @@ def assignToGroup(messageid, phrasegroup, uncategorizedId, userid, influencerNam
 	if phrasegroup in previousPhrasegroups and phrasegroup != otherId and phrasegroup != uncategorizedId:
 		print "FYI that response has already been used"
 		#phrasegroupid = otherId
+		queryStr = "UPDATE unprocessedmessages SET usealternative = 'True' WHERE id = " + str(messageid) + ";"
+		executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE phrasegroup = " + str(uncategorizedId) + " AND userid = '"+ userid +"';"
 	executeDBCommand(conn, cur, queryStr)
 	queryStr = "UPDATE unprocessedmessages SET phrasegroup = " + str(phrasegroup) + " WHERE id = " + str(messageid) + ";"
@@ -561,6 +563,7 @@ def changeResponse(conn, cur, responses, phraseid, influencerName):
 			queryStr = "UPDATE responses SET mediadownloadurl = '" + imageUrl + "' WHERE influencername = '" + influencerName + "' AND response = '" + refPhrase + "';" 
 			executeDBCommand(conn, cur, queryStr)
 			
+	
 	
 def addResponse(conn, cur, responses, phraseid, influencerName):
 	responsePhrases = []
@@ -938,6 +941,32 @@ def updateResponse():
 	queryStr = "INSERT INTO responses VALUES (" + responseid + ", '" + responseText + "', DEFAULT, 'text', '" + influencerName + "');" 
 	executeDBCommand(conn, cur, queryStr)
 
+def addData():
+	global conn
+	global cur
+	userid = 'addingData'
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	dbdata = getMatches(conn, cur, influencerName, 'NULL')
+	validids = []
+	for row in dbdata:
+		print str(row[0]) + ": " + row[1]
+		validids.append(str(row[0]))
+	phraseid = raw_input("Input id to train: ")
+	if phraseid not in validids:
+		print 'Not a valid id'
+		return
+	while True:
+		trainingPhrase = raw_input("Input phrase for category, q to quit: ")
+		if trainingPhrase == 'q':
+			break
+		trainingPhrase = trainingPhrase.replace("'", "''")
+		for i in range(0, 5):
+			queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '"	+ trainingPhrase + "', '" + influencerName + "', '" + userid + "', DEFAULT, 'False', 'text', 'False'," + str(phraseid) + ", DEFAULT, 100, DEFAULT, 'False');"
+			executeDBCommand(conn, cur, queryStr)
+	
+
 
 def printOptions():
 	print "0: View all messages"
@@ -961,7 +990,8 @@ def printOptions():
 	print "18: Group New Users"
 	print "19: Change Category Text"
 	print "20: Add alternative response"
-	print "21: Tweet\n"
+	print "21: Tweet"
+	print "22: Add data\n"
 	
 
 if __name__ == '__main__':
@@ -1020,6 +1050,8 @@ if __name__ == '__main__':
 			addAltCategory()
 		elif category == "21":
 			tweet()
+		elif category == "22":
+			addData()
 		else:
 			break
 

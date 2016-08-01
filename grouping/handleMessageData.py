@@ -944,6 +944,7 @@ def updateResponse():
 def addData():
 	global conn
 	global cur
+	validWeights = [str(i) for i in range(5, 16)]
 	userid = 'addingData'
 	influencerName = promptForInfluencerName()
 	if influencerName == "-1":
@@ -961,8 +962,11 @@ def addData():
 		trainingPhrase = raw_input("Input phrase for category, q to quit: ")
 		if trainingPhrase == 'q':
 			break
+		weight = raw_input("Type the weight (between 5 and 15): ")
+		while weight not in validWeights:
+			weight = raw_input("Type the weight (between 5 and 15): ")
 		trainingPhrase = trainingPhrase.replace("'", "''")
-		for i in range(0, 5):
+		for i in range(0, int(weight)):
 			queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '"	+ trainingPhrase + "', '" + influencerName + "', '" + userid + "', DEFAULT, 'False', 'text', 'False'," + str(phraseid) + ", DEFAULT, 100, DEFAULT, 'False');"
 			executeDBCommand(conn, cur, queryStr)
 	

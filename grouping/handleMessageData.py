@@ -947,7 +947,7 @@ def updateAltCategory():
 	influencerName = promptForInfluencerName()
 	if influencerName == "-1":
 		return
-	option = raw_input("Type c to change a response, d to delete a response, or a to add an additional response (Anything else to quit): ")
+	option = raw_input("Type c to change a response, d to delete a response, or a to add an additional text to an overflow response (Anything else to quit): ")
 	if option != 'c' and option != 'd' and option != 'a':
 		print 'Not a valid option'
 		return
@@ -961,30 +961,31 @@ def updateAltCategory():
 		print 'Not a valid id'
 		return
 	queryStr = "SELECT * FROM overflowresponses WHERE qid = '" + responseid + "' ORDER BY newid;"
-	cur.execute(queryStr)
-	conn.commit()
+	executeDBCommand(conn, cur, queryStr)
 	dbdata = cur.fetchall()
 	validids = []
 	for row in dbdata:
 		print str(row[6]) + ": " + row[1]
 		validids.append(str(row[6]))
-	newId = raw_input("Input alternate response to edit/deletes: ") # last in values
+	newId = raw_input("Input alternate response id to edit/deletes: ") # last in values
 	if newId not in validids:
 		print 'Not a valid id'
 		return
 	if option == 'a':
-		messageType = raw_input("Enter 'i' for image, anything else for text: ")
-		#add options here
-		text = raw_input("Enter new response: ")
-		queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, " + newId + ");"
-		cur.execute(queryStr)
-		conn.commit()
+		categoryType = raw_input("Enter 'i' for image, anything else for text: ")
+		if categoryType != 'i':
+			text = raw_input("Response Text (press enter to leave empty): ")
+			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, " + newId + ");"
+			executeDBCommand(conn, cur, queryStr)
+		else:
+			imageUrl = raw_input("Image url: ")
+			imageName = raw_input("Image name: ")
+			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + imageName + "', DEFAULT, 'image', '" + influencerName + "', '" + imageUrl + "', " + newId + ");"
+			executeDBCommand(conn, cur, queryStr)
 		print 'Additional response added\n'
 		return
-		
 	queryStr = "SELECT * FROM overflowresponses WHERE newid = '" + newId + "' ORDER BY newid;"
-	cur.execute(queryStr)
-	conn.commit()
+	executeDBCommand(conn, cur, queryStr)
 	dbdata = cur.fetchall()
 	validids = []
 	i = len(dbdata) - 1
@@ -1000,12 +1001,12 @@ def updateAltCategory():
 	if option == 'c':
 		editStr = raw_input("Input new response: ")
 		queryStr = "UPDATE overflowresponses SET response = '" + editStr + "' WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		executeDBCommand(conn, cur, queryStr)
 		print 'Response changed\n'
 	elif option == 'd':
 		queryStr = "DELETE FROM overflowresponses WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		executeDBCommand(conn, cur, queryStr)
 		print 'Response deleted\n'
-	cur.execute(queryStr)
-	conn.commit()
 
 def addData():
 	global conn
@@ -1062,7 +1063,7 @@ def printOptions():
 	print "20: Add alternative response"
 	print "21: Tweet"
 	print "22: Add data"
-	print "23: Edit/Delete alternative response\n"
+	print "23: Edit/Delete/Add overflows response\n"
 	
 
 if __name__ == '__main__':

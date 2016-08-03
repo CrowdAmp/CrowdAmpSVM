@@ -941,6 +941,72 @@ def updateResponse():
 	queryStr = "INSERT INTO responses VALUES (" + responseid + ", '" + responseText + "', DEFAULT, 'text', '" + influencerName + "');" 
 	executeDBCommand(conn, cur, queryStr)
 
+def updateAltCategory():
+	global conn
+	global cur
+	influencerName = promptForInfluencerName()
+	if influencerName == "-1":
+		return
+	option = raw_input("Type c to change a response, d to delete a response, or a to add an additional response (Anything else to quit): ")
+	if option != 'c' and option != 'd' and option != 'a':
+		print 'Not a valid option'
+		return
+	dbdata = getMatches(conn, cur, influencerName, 'NULL')
+	validids = []
+	for row in dbdata:
+		print str(row[0]) + ": " + row[1]
+		validids.append(str(row[0]))
+	responseid = raw_input("Input response id to change: ") #first in values
+	if responseid not in validids:
+		print 'Not a valid id'
+		return
+	queryStr = "SELECT * FROM overflowresponses WHERE qid = '" + responseid + "' ORDER BY newid;"
+	cur.execute(queryStr)
+	conn.commit()
+	dbdata = cur.fetchall()
+	validids = []
+	for row in dbdata:
+		print str(row[6]) + ": " + row[1]
+		validids.append(str(row[6]))
+	newId = raw_input("Input alternate response to edit/deletes: ") # last in values
+	if newId not in validids:
+		print 'Not a valid id'
+		return
+	if option == 'a':
+		messageType = raw_input("Enter 'i' for image, anything else for text: ")
+		#add options here
+		text = raw_input("Enter new response: ")
+		queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, " + newId + ");"
+		cur.execute(queryStr)
+		conn.commit()
+		print 'Additional response added\n'
+		return
+		
+	queryStr = "SELECT * FROM overflowresponses WHERE newid = '" + newId + "' ORDER BY newid;"
+	cur.execute(queryStr)
+	conn.commit()
+	dbdata = cur.fetchall()
+	validids = []
+	i = len(dbdata) - 1
+	for row in dbdata:
+		print str(i) + ": " + row[1]
+		validids.append(str(row[1]))
+		i -= 1
+	editId = raw_input("Input index to edit: ")
+	editId = len(validids) - (1 + int(editId))
+	if editId < 0 or editId >= len(validids):
+		print 'Not a valid index'
+		return
+	if option == 'c':
+		editStr = raw_input("Input new response: ")
+		queryStr = "UPDATE overflowresponses SET response = '" + editStr + "' WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		print 'Response changed\n'
+	elif option == 'd':
+		queryStr = "DELETE FROM overflowresponses WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		print 'Response deleted\n'
+	cur.execute(queryStr)
+	conn.commit()
+
 def addData():
 	global conn
 	global cur
@@ -995,7 +1061,8 @@ def printOptions():
 	print "19: Change Category Text"
 	print "20: Add alternative response"
 	print "21: Tweet"
-	print "22: Add data\n"
+	print "22: Add data"
+	print "23: Edit/Delete alternative response\n"
 	
 
 if __name__ == '__main__':
@@ -1056,6 +1123,8 @@ if __name__ == '__main__':
 			tweet()
 		elif category == "22":
 			addData()
+		elif category == "23":
+			updateAltCategory()
 		else:
 			break
 

@@ -947,18 +947,18 @@ def updateAltCategory():
 	influencerName = promptForInfluencerName()
 	if influencerName == "-1":
 		return
-	option = raw_input("Type c to change a response, d to delete a response, or a to add an additional text to an overflow response (Anything else to quit): ")
-	if option != 'c' and option != 'd' and option != 'a':
-		print 'Not a valid option'
+	option = raw_input("Type 'c' to change a response, 'd' to delete a response, 'o' to add original to overflow if overflow doesn't exist, or 'a' to add an additional text to an overflow response (Anything else to quit): ")
+	if option != 'c' and option != 'd' and option != 'o' and option != 'a':
+		print 'Not a valid option\n'
 		return
 	dbdata = getMatches(conn, cur, influencerName, 'NULL')
 	validids = []
 	for row in dbdata:
 		print str(row[0]) + ": " + row[1]
 		validids.append(str(row[0]))
-	responseid = raw_input("Input response id to change: ") #first in values
+	responseid = raw_input("Input response id to change: ")
 	if responseid not in validids:
-		print 'Not a valid id'
+		print 'Not a valid id\n'
 		return
 	queryStr = "SELECT * FROM overflowresponses WHERE qid = '" + responseid + "' ORDER BY newid;"
 	executeDBCommand(conn, cur, queryStr)
@@ -967,7 +967,19 @@ def updateAltCategory():
 	for row in dbdata:
 		print str(row[6]) + ": " + row[1]
 		validids.append(str(row[6]))
-	newId = raw_input("Input alternate response id to edit/deletes: ") # last in values
+	if option == 'o':
+		if len(validids) != 0:
+			print 'Response already has an overflowresponse\n'
+			return
+		queryStr = "SELECT * FROM responses WHERE qid = '" + responseid + "' AND influencername = '" + influencerName + "';"
+		executeDBCommand(conn, cur, queryStr)
+		dbdata = cur.fetchall()
+		for row in dbdata:
+			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + str(row[1]).replace("'", "''") + "', DEFAULT, '" + str(row[3]) + "', '" + influencerName + "', '" + str(row[7]) + "', DEFAULT);"
+			executeDBCommand(conn, cur, queryStr)
+			print 'Response succesfully moved to overflowresponses\n'
+			return
+	newId = raw_input("Input alternate response id to edit/deletes: ")
 	if newId not in validids:
 		print 'Not a valid id'
 		return
@@ -975,7 +987,7 @@ def updateAltCategory():
 		categoryType = raw_input("Enter 'i' for image, anything else for text: ")
 		if categoryType != 'i':
 			text = raw_input("Response Text (press enter to leave empty): ")
-			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, " + newId + ");"
+			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + text.replace("'", "''") + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, " + newId + ");"
 			executeDBCommand(conn, cur, queryStr)
 		else:
 			imageUrl = raw_input("Image url: ")
@@ -996,15 +1008,15 @@ def updateAltCategory():
 	editId = raw_input("Input index to edit: ")
 	editId = len(validids) - (1 + int(editId))
 	if editId < 0 or editId >= len(validids):
-		print 'Not a valid index'
+		print 'Not a valid index\n'
 		return
 	if option == 'c':
 		editStr = raw_input("Input new response: ")
-		queryStr = "UPDATE overflowresponses SET response = '" + editStr + "' WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		queryStr = "UPDATE overflowresponses SET response = '" + editStr.replace("'", "''") + "' WHERE response = '" + validids[editId].replace("'", "''") + "' AND newid = " + newId + ";"
 		executeDBCommand(conn, cur, queryStr)
 		print 'Response changed\n'
 	elif option == 'd':
-		queryStr = "DELETE FROM overflowresponses WHERE response = '" + validids[editId] + "' AND newid = " + newId + ";"
+		queryStr = "DELETE FROM overflowresponses WHERE response = '" + validids[editId].replace("'", "''") + "' AND newid = " + newId + ";"
 		executeDBCommand(conn, cur, queryStr)
 		print 'Response deleted\n'
 
@@ -1063,7 +1075,7 @@ def printOptions():
 	print "20: Add alternative response"
 	print "21: Tweet"
 	print "22: Add data"
-	print "23: Edit/Delete/Add overflows response\n"
+	print "23: Edit/Delete/Move-to/Add overflow response\n"
 	
 
 if __name__ == '__main__':

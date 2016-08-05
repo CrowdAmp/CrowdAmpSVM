@@ -86,12 +86,12 @@ def sendResponses():
 def sendInfinite():
 	url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToUsers'
 	headers = {'content-type': 'application/json'}
-	print 'Warning: This will render your console inoperable, ctrl+c to quit\n'
+	print 'Warning: This will render this console unusable unless you Ctrl+C to quit\n'
 	influencerName = promptForInfluencerName()
 	while (1):
 		queryStr = "SELECT * from phraseids WHERE influencerid = '" + influencerName + "' AND catchallcategory = 'N' ORDER BY numusers desc;"
 		executeDBCommand(conn, cur, queryStr)
-		print 'Sending responses infinitely to ' + influencerName + ': ctrl + c to quit\n'
+		print '\nSending responses infinitely to ' + influencerName + ': Ctrl+C to quit\n'
 		info = cur.fetchall()
 		for row in info:
 			print "sending response to: " + row[1]

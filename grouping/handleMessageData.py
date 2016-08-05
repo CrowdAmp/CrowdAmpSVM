@@ -401,7 +401,7 @@ def groupQuestions():
 
 	while True:
 		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE sentbyuser = 'True' AND influencerid = '" + influencerName + "' AND phrasegroup = " + str(uncategorizedId) + " ORDER BY timesent desc LIMIT 1) RETURNING *;"
-		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE sentbyuser = 'True' AND influencerid = '" + influencerName + "' AND phrasegroup = " + str(uncategorizedId) + " ORDER BY timesent LIMIT 1) RETURNING *;"
+		queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE id > 94531 AND sentbyuser = 'True' AND influencerid = '" + influencerName + "' AND phrasegroup = " + str(uncategorizedId) + " ORDER BY timesent LIMIT 1) RETURNING *;"
 		executeDBCommand(conn, cur, queryStr)
 		messageinfo = cur.fetchall()
 		if len(messageinfo) == 0:
@@ -759,9 +759,12 @@ def printContext(conn, cur, mid, influencerName):
 	executeDBCommand(conn, cur, queryStr)
 	info = cur.fetchall()
 	print "PRINTING CONTEXT"
-	print info[2][1]
-	print info[1][1]
-	print info[0][1]
+	if len(info) >= 3:
+		print info[2][1]
+	if len(info) >= 2:
+		print info[1][1]
+	if len(info) >= 1:
+		print info[0][1]
 
 
 def trustModel():

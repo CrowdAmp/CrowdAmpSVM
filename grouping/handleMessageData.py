@@ -83,6 +83,22 @@ def sendResponses():
 		data = { "phraseId" : str(phraseid) }
 		requests.post(url, data=json.dumps(data), headers=headers)
 
+def sendInfinite():
+	url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToUsers'
+	headers = {'content-type': 'application/json'}
+	print 'Warning: This will render your console inoperable, ctrl+c to quit\n'
+	influencerName = promptForInfluencerName()
+	while (1):
+		queryStr = "SELECT * from phraseids WHERE influencerid = '" + influencerName + "' AND catchallcategory = 'N' ORDER BY numusers desc;"
+		executeDBCommand(conn, cur, queryStr)
+		print 'Sending responses infinitely to ' + influencerName + ': ctrl + c to quit\n'
+		info = cur.fetchall()
+		for row in info:
+			print "sending response to: " + row[1]
+			phraseid = row[0]
+			data = { "phraseId" : str(phraseid) }
+			requests.post(url, data=json.dumps(data), headers=headers)
+
 # TODO: Enhance NLP Stuffs
 def displayTopFive(influencerName, phrase, messageid, otherId):
 	global conn
@@ -1078,7 +1094,8 @@ def printOptions():
 	print "20: Add alternative response"
 	print "21: Tweet"
 	print "22: Add data"
-	print "23: Edit/Delete/Move-to/Add overflow response\n"
+	print "23: Edit/Delete/Move-to/Add overflow response"
+	print "24: Send infinite\n"
 	
 
 if __name__ == '__main__':
@@ -1141,6 +1158,8 @@ if __name__ == '__main__':
 			addData()
 		elif category == "23":
 			updateAltCategory()
+		elif category == "24":
+			sendInfinite()
 		else:
 			break
 

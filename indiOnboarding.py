@@ -1,5 +1,9 @@
 import psycopg2
 
+def executeDBCommand(conn, cur, query):
+    cur.execute(query)
+    conn.commit()
+
 def promptForName():
 	name = raw_input("Enter the new user's name: ")
 	return name
@@ -72,20 +76,32 @@ def printOptions():
 	print "0: Set-up entire new user"
 	print "1: Change user's info\n"
 
-while True:
-	printOptions()
-	category = raw_input("Enter task number ('q' to exit): ")
-	if category == '0':
-		name = promptForName()
-		gender = promptForGender()
-		height = promptForHeight()
-		weight = promptForWeight()
-		goals = promptForGoals()
-		days = promptForDays()
+
+if __name__ == '__main__':
+
+    conn = psycopg2.connect(
+        database="d1jfg4556jcg85",
+        user="u95kuk1lu5e68c",
+        password="p9462kijpsfllp2i03nc3bqq6gt",
+        host="ec2-52-204-179-136.compute-1.amazonaws.com",
+        port=5432
+    )
+    cur = conn.cursor()
+
+	while True:
+		printOptions()
+		category = raw_input("Enter task number ('q' to exit): ")
+		if category == '0':
+			name = promptForName()
+			gender = promptForGender()
+			height = promptForHeight()
+			weight = promptForWeight()
+			goals = promptForGoals()
+			days = promptForDays()
 		#TODO: Push to db
-	elif category == '1':
-		changeUserInfo()
-	elif category == 'q':
-		break
-	else:
-		print 'ERROR: Invalid input, try again\n'
+		elif category == '1':
+			changeUserInfo()
+		elif category == 'q':
+			break
+		else:
+			print 'ERROR: Invalid input, try again\n'

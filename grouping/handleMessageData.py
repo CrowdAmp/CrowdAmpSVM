@@ -979,17 +979,7 @@ def updateAltCategory():
 	if responseid not in validids:
 		print 'Not a valid id\n'
 		return
-	queryStr = "SELECT * FROM overflowresponses WHERE qid = '" + responseid + "' ORDER BY newid;"
-	executeDBCommand(conn, cur, queryStr)
-	dbdata = cur.fetchall()
-	validids = []
-	for row in dbdata:
-		print str(row[6]) + ": " + row[1]
-		validids.append(str(row[6]))
 	if option == 'o':
-		if len(validids) != 0:
-			print 'Response already has an overflowresponse\n'
-			return
 		queryStr = "SELECT * FROM responses WHERE qid = '" + responseid + "' AND influencername = '" + influencerName + "';"
 		executeDBCommand(conn, cur, queryStr)
 		dbdata = cur.fetchall()
@@ -997,7 +987,14 @@ def updateAltCategory():
 			queryStr = "INSERT INTO overflowresponses VALUES (" + responseid + ", '" + str(row[1]).replace("'", "''") + "', DEFAULT, '" + str(row[3]) + "', '" + influencerName + "', '" + str(row[7]) + "', DEFAULT);"
 			executeDBCommand(conn, cur, queryStr)
 			print 'Response succesfully moved to overflowresponses\n'
-			return
+		return
+	queryStr = "SELECT * FROM overflowresponses WHERE qid = '" + responseid + "' ORDER BY newid;"
+	executeDBCommand(conn, cur, queryStr)
+	dbdata = cur.fetchall()
+	validids = []
+	for row in dbdata:
+		print str(row[6]) + ": " + row[1]
+		validids.append(str(row[6]))
 	newId = raw_input("Input alternate response id to edit/deletes: ")
 	if newId not in validids:
 		print 'Not a valid id'

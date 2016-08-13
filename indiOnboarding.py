@@ -1,81 +1,119 @@
 import psycopg2
 
+#Globals
+conn = None
+cur = None
+
 def executeDBCommand(conn, cur, query):
     cur.execute(query)
     conn.commit()
 
+def promptForUserId():
+    userId = raw_input("Enter user ID: ")
+    #user check
+    return userId
+
 def promptForName():
-	name = raw_input("Enter the new user's name: ")
-	return name
+    name = raw_input("Enter the new user's name: ")
+    return name
 
 def promptForGender():
-	gender = raw_input("Enter the new user's gender(M or F): ")
-	if gender == 'M' or gender == 'm':
-		gender = 'male'
-	elif gender == 'F' or gender =='f':
-		gender = 'female'
-	else:
-		print 'ERROR: Invalid input, try again\n'
-		return promptForGender()
-	return gender
+    gender = raw_input("Enter the new user's gender(M or F): ")
+    if gender == 'M' or gender == 'm':
+        gender = 'm'
+    elif gender == 'F' or gender =='f':
+        gender = 'f'
+    else:
+        print 'ERROR: Invalid input, try again\n'
+        return promptForGender()
+    return gender
 
 def promptForHeight():
-	feet = raw_input("Enter how many feet tall the user is: ")
-	inches = raw_input("Enter the inches: ")
-	height = (feet * 12) + inches
-	return height
+    feet = raw_input("Enter how many feet tall the user is: ")
+    inches = raw_input("Enter the inches: ")
+    height = (int(feet) * 12) + int(inches)
+    return height
 
 def promptForWeight():
-	weight = raw_input("Enter the user's weight (lbs): ")
-	return weight
+    weight = raw_input("Enter the user's weight (lbs): ")
+    return weight
 
 def promptForGoals():
-	goals = raw_input("Enter the user's goals: ")
-	return goals
+    goals = raw_input("Enter the user's goals: ")
+    return goals
 
 def promptForDays():
-	days = raw_input("Enter the user's workout days(MTWThFSSu): ")
-	return days
+    days = raw_input("Enter the user's workout days(MTWThFSSu): ")
+    return days
+
+def addNewUser():
+    global conn
+    global cur
+
+    userId = promptForUserId()
+    name = promptForName()
+    gender = promptForGender()
+    height = promptForHeight()
+    weight = promptForWeight()
+    goals = promptForGoals()
+    days = promptForDays()
+
+    queryStr = "INSERT INTO indiuserinfo VALUES ( DEFAULT, '" + userId + "', '" + name + "', '" + gender + "', " + str(height) + ", " + str(weight) + ", '" + goals + "', '" +  days + "');"
+    executeDBCommand(conn, cur, queryStr)
 
 def changeUserInfo():
-	user = raw_input("Enter user you want to change: ")
-		#TODO: User check
+    global conn
+    global cur
 
-	while True:
-		print "0: Name"
-		print "1: Gender"
-		print "2: Height"
-		print "3: Weight"
-		print "4: Goals"
-		print "5: Days\n"
+    user = promptForUserId()
+    #TODO: User check
 
-		option = raw_input("Select index of info you want to change: ")
+    while True:
+        print "0: Name"
+        print "1: Gender"
+        print "2: Height"
+        print "3: Weight"
+        print "4: Goals"
+        print "5: Days\n"
 
-		if option == '0':
-			name = promptForName()
-			continue
-		elif option == '1':
-			gender = promptForGender()
-			continue
-		elif option == '2':
-			height = promptForHeight()
-			continue
-		elif option == '3':
-			weight = promptForWeight()
-			continue
-		elif option == '4':
-			goals = promptForGoals()
-			continue
-		elif option == '5':
-			days = promptForDays()
-			continue
-		else:
-			print 'ERROR: Invalid input, try again\n'
+        option = raw_input("Select index of info you want to change: ")
+
+        if option == '0':
+            name = promptForName()
+            queryStr = "UPDATE indiuserinfo SET name = '" + name + "' WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        elif option == '1':
+            gender = promptForGender()
+            queryStr = "UPDATE indiuserinfo SET gender = '" + gender + "' WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        elif option == '2':
+            height = promptForHeight()
+            queryStr = "UPDATE indiuserinfo SET height = " + str(height) + " WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        elif option == '3':
+            weight = promptForWeight()
+            queryStr = "UPDATE indiuserinfo SET weight = " + str(weight) + " WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        elif option == '4':
+            goals = promptForGoals()
+            queryStr = "UPDATE indiuserinfo SET goals = '" + goals + "' WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        elif option == '5':
+            days = promptForDays()
+            queryStr = "UPDATE indiuserinfo SET days = '" + days + "' WHERE userid = '" + userId "';"
+            executeDBCommand(conn, cur, queryStr)
+            break
+        else:
+            print 'ERROR: Invalid input, try again\n'
 
 def printOptions():
-	print "0: Set-up entire new user"
-	print "1: Change user's info\n"
-
+    print "0: Set-up entire new user"
+    print "1: Change user's info\n"
 
 if __name__ == '__main__':
 
@@ -88,20 +126,14 @@ if __name__ == '__main__':
     )
     cur = conn.cursor()
 
-	while True:
-		printOptions()
-		category = raw_input("Enter task number ('q' to exit): ")
-		if category == '0':
-			name = promptForName()
-			gender = promptForGender()
-			height = promptForHeight()
-			weight = promptForWeight()
-			goals = promptForGoals()
-			days = promptForDays()
-		#TODO: Push to db
-		elif category == '1':
-			changeUserInfo()
-		elif category == 'q':
-			break
-		else:
-			print 'ERROR: Invalid input, try again\n'
+    while True:
+        printOptions()
+        category = raw_input("Enter task number ('q' to exit): ")
+        if category == '0':
+            addNewUser()
+        elif category == '1':
+            changeUserInfo()
+        elif category == 'q':
+            break
+        else:
+            print 'ERROR: Invalid input, try again\n'

@@ -198,6 +198,7 @@ def recategorizePrevious(conn, cur):
 
 def printFullConversation(conn, cur, messageinfo, manual):
 	print 'Displaying tail of conversation \n'
+	print 'User ID: ' + str(messageinfo[0][3])
 	valid_index_input = []
 	queryStr = "SELECT * FROM unprocessedmessages WHERE userid = '" + messageinfo[0][3] + "' AND influencerid = '"+ messageinfo[0][2]+"' ORDER BY timesent desc LIMIT 5;"
 	executeDBCommand(conn, cur, queryStr)

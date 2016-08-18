@@ -22,6 +22,33 @@ def femaleForm(cardio, age, time, weight):
     else:
         return ((age * 0.074) - (weight * 0.05741) + (100 * 0.4472) - 20.4022) * time / 4.184
 
+def calorieForm(age, height, weight, male):
+    if male:
+        calories = (10 * weight) + (6.25 * (height * 2.54)) - (5 * age) + 5
+    else:
+        calories = (10 * weight) + (6.25 * (height * 2.54)) - (5 * age) - 161
+    return calories
+
+def promptForUserId():
+    global conn
+    global cur
+    queryStr = "SELECT DISTINCT userid, name FROM indiuserinfo ORDER BY userid;"
+    executeDBCommand(conn, cur, queryStr)
+    ids = cur.fetchall()
+    validids = []
+    i = len(ids) - 1
+    for row in ids:
+        print str(i) + ": " + row[0] + " | " + row[1]
+        validids.append(str(row[0]))
+        i -= 1
+    editId = raw_input("Input index of userId to enter: ")
+    editId = len(validids) - (1 + int(editId))
+    if editId < 0 or editId >= len(validids):
+        print 'Not a valid index\n'
+        return
+    return validids[editId]
+
+
 def promptForName():
     name = raw_input("Enter the new user's name: ")
     return name
@@ -60,6 +87,8 @@ def promptForDays():
     return days
 
 def addNewUser():
+    global conn
+    global cur
     queryStr = "SELECT DISTINCT userid FROM unprocessedmessages WHERE influencerid = 'indibot' AND userid NOT IN (SELECT userid FROM indiuserinfo) ORDER BY userid;"
     executeDBCommand(conn, cur, queryStr)
     ids = cur.fetchall()
@@ -97,21 +126,10 @@ def addNewUser():
     print 'New user succesfully entered\n'
 
 def changeUserInfo():
-    queryStr = "SELECT DISTINCT userid, name FROM indiuserinfo ORDER BY userid;"
-    executeDBCommand(conn, cur, queryStr)
-    ids = cur.fetchall()
-    validids = []
-    i = len(ids) - 1
-    for row in ids:
-        print str(i) + ": " + row[0] + " | " + row[1]
-        validids.append(str(row[0]))
-        i -= 1
-    editId = raw_input("Input index of the user's user ID to change: ")
-    editId = len(validids) - (1 + int(editId))
-    if editId < 0 or editId >= len(validids):
-        print 'Not a valid index\n'
-        return
-    userId = validids[editId]
+    global conn
+    global cur
+
+    userId = promptForUserId()
 
     queryStr = "SELECT * FROM indiuserinfo WHERE userid = '" + userId + "';"
     executeDBCommand(conn, cur, queryStr)
@@ -141,7 +159,7 @@ def changeUserInfo():
             break
         elif option == '2':
             age = promptForAge()
-            queryStr = "UPDATE indiuserinfo SET height = " + str(age) + " WHERE userid = '" + userId + "';"
+            queryStr = "UPDATE indiuserinfo SET age = " + str(age) + " WHERE userid = '" + userId + "';"
             break
         elif option == '3':
             height = promptForHeight()
@@ -167,6 +185,8 @@ def changeUserInfo():
     print '\nUser info succesfully changed'
 
 def sendDaily():
+    global conn
+    global cur
     day = raw_input("Enter today's date (MTuWThFSaSu): ")
     if day not in 'MTuWThFSaSu' or day == '':
         print 'ERROR: Not a valid day'
@@ -176,10 +196,12 @@ def sendDaily():
     users = cur.fetchall()
     validUsers = []
     for user in users:
-        if day in user[7]:
+        if day in user[8]:
             validUsers.append(str(user[1]))
     print 'Sending to:', validUsers
-    message = raw_input("Enter message to send: ")
+    message = raw_input("Enter message to send ('d' for default): ")
+    if message == 'd':
+    	message = 'Today is a gym day! Let me know when you workout so that I can log it in for you.'
     message = message.replace("'", "''")
     for user in validUsers:
         data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
@@ -191,21 +213,10 @@ def sendDaily():
     print 'Successfully sent reminders\n'
 
 def addInfo():
-    queryStr = "SELECT DISTINCT userid, name FROM indiuserinfo ORDER BY userid;"
-    executeDBCommand(conn, cur, queryStr)
-    ids = cur.fetchall()
-    validids = []
-    i = len(ids) - 1
-    for row in ids:
-        print str(i) + ": " + row[0] + " | " + row[1]
-        validids.append(str(row[0]))
-        i -= 1
-    editId = raw_input("Input index of userId to enter: ")
-    editId = len(validids) - (1 + int(editId))
-    if editId < 0 or editId >= len(validids):
-        print 'Not a valid index\n'
-        return
-    userId = validids[editId]
+    global conn
+    global cur
+
+    userId = promptForUserId()
 
     option = raw_input("Enter if the user entered food or exercise [f/e]: ")
     if option == 'f':
@@ -213,23 +224,24 @@ def addInfo():
         calories = raw_input("Enter the number of calories the meal contains: ")
         comment = raw_input("Enter the food consumed: ")
         day = raw_input("Enter the day of the week (MTuWThFSaSu): ")
-        queryStr = "INSERT INTO indilog VALUES (DEFAULT, '" + userId + "', '" + option + "', " + str(calories) + ", '" + comment + "', DEFAULT, FALSE, '" + day + "', DEFAULT);"
+        queryStr = "INSERT INTO indilog VALUES (DEFAULT, '" + userId + "', '" + option + "', " + str(int(calories)) + ", '" + comment + "', DEFAULT, FALSE, '" + day + "', DEFAULT);"
         executeDBCommand(conn, cur, queryStr)
         print 'Exercise/food added\n'
-        message = "Thank you for updating me! I've added " + str(calories) + " for your " + comment + " onto today!"
+        message = "Thank you for updating me! I have added " + str(int(calories)) + " calories for your " + comment + " for today!"
     elif option == 'e':
         option = 'exercise'
         comment = raw_input("Enter the exercise performed: ")
         day = raw_input("Enter the day of the week (MTuWThFSaSu): ")
         time = raw_input("Enter time spent on the exercise: ")
         cardio = raw_input("Cardio or weight training (c/w): ")
+        custom = raw_input("Enter custom calorie or forumula (c/f): ")
         queryStr = "SELECT age, weight, gender FROM indiuserinfo WHERE userid = '" + userId + "';"
         executeDBCommand(conn, cur, queryStr)
         userInfo = (cur.fetchall())[0]
         print userInfo
         if cardio == 'c':
             cardio = True
-        elif cardio == 'm':
+        elif cardio == 'w':
             cardio = False
         else:
         	print 'ERROR: Invalid option\n'
@@ -238,17 +250,18 @@ def addInfo():
             calories = maleForm(cardio, float(userInfo[0]), float(time), float(userInfo[1]))
         elif userInfo[2] == 'f':
             calories = femaleForm(cardio, float(userInfo[0]), float(time), float(userInfo[1]))
-        queryStr = "INSERT INTO indilog VALUES (DEFAULT, '" + userId + "', '" + option + "', " + str(int(calories)) + ", '" + comment + "', " + time + ", FALSE, '" + day + "', DEFAULT);"
+        if custom == 'c':
+        	calories = raw_input("Enter calories burned on workout: ")
+        queryStr = "INSERT INTO indilog VALUES (DEFAULT, '" + userId + "', '" + option + "', " + str(calories) + ", '" + comment + "', " + time + ", FALSE, '" + day + "', DEFAULT);"
         executeDBCommand(conn, cur, queryStr)
         print 'Exercise/food added\n'
-        message = "Based on how much your weight and how much you exercised, I will input " + str(calories) + " calories burned during your workout!" 
+        message = "Based on your weight and how long you exercised, I will input " + str(int(calories)) + " calories burned during your workout! Great job!" 
     else:
         print 'ERROR: Invalid option\n'
         return
 
     sendMessage = raw_input("Send the message to the user? (y/n): ")
     if sendMessage == 'y':
-	    message = message.replace("'", "''")
 	    data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : userId, "mediaDownloadUrl" : ""}
 	    url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
 	    headers = {'content-type': 'application/json'}
@@ -256,6 +269,9 @@ def addInfo():
 	    queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + userId + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
 	    executeDBCommand(conn, cur, queryStr)
 	    print 'Food message sent'
+
+def calcCalories():
+    userId = promptForUserId()
 
 def printOptions():
     print "\n0: Set-up an entire new user"

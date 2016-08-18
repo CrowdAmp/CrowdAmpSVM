@@ -511,7 +511,7 @@ def addAltCategory():
 		text = raw_input("Enter text: ")
 		text = text.replace("'", "''")
 
-		queryStr = "INSERT INTO overflowresponses VALUES (" + category + ", '" + text + "', DEFAULT, 'text', '" + influencerName + "', DEFAULT, DEFAULT);"
+		queryStr = "INSERT INTO overflowresponses VALUES (" + category + ", '" + text + "', DEFAULT, 'image', '" + influencerName + "', DEFAULT, DEFAULT);"
 		executeDBCommand(conn, cur, queryStr)
 	else:
 		imageName = raw_input("Image Name: ")

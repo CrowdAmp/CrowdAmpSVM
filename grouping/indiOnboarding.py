@@ -201,7 +201,7 @@ def sendDaily():
     print 'Sending to:', validUsers
     message = raw_input("Enter message to send ('d' for default): ")
     if message == 'd':
-    	message = 'Today is a gym day! Let me know when you workout so that I can log it in for you.'
+        message = 'Today is a gym day! Let me know when you workout so that I can log it in for you.'
     message = message.replace("'", "''")
     for user in validUsers:
         data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
@@ -214,7 +214,7 @@ def sendDaily():
 
 def addInfo():
     global conn
-    global cur
+    global cur 
 
     userId = promptForUserId()
 
@@ -244,14 +244,14 @@ def addInfo():
         elif cardio == 'w':
             cardio = False
         else:
-        	print 'ERROR: Invalid option\n'
-        	return
+            print 'ERROR: Invalid option\n'
+            return
         if userInfo[2] == 'm':
             calories = maleForm(cardio, float(userInfo[0]), float(time), float(userInfo[1]))
         elif userInfo[2] == 'f':
             calories = femaleForm(cardio, float(userInfo[0]), float(time), float(userInfo[1]))
         if custom == 'c':
-        	calories = raw_input("Enter calories burned on workout: ")
+            calories = raw_input("Enter calories burned on workout: ")
         queryStr = "INSERT INTO indilog VALUES (DEFAULT, '" + userId + "', '" + option + "', " + str(calories) + ", '" + comment + "', " + time + ", FALSE, '" + day + "', DEFAULT);"
         executeDBCommand(conn, cur, queryStr)
         print 'Exercise/food added\n'
@@ -262,13 +262,31 @@ def addInfo():
 
     sendMessage = raw_input("Send the message to the user? (y/n): ")
     if sendMessage == 'y':
-	    data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : userId, "mediaDownloadUrl" : ""}
-	    url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
-	    headers = {'content-type': 'application/json'}
-	    requests.post(url, data=json.dumps(data), headers=headers)
-	    queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + userId + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
-	    executeDBCommand(conn, cur, queryStr)
-	    print 'Food message sent'
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : userId, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + userId + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+        print 'Food message sent'
+
+def sendCal():
+    global conn
+    global cur 
+    
+    userId = promptForUserId()
+    calories = raw_input("Enter the number of calories consumed: ")
+    message = "Awesome! I have logged " + str(int(calories)) + " calories!"
+
+    data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : userId, "mediaDownloadUrl" : ""}
+    url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+    headers = {'content-type': 'application/json'}
+    requests.post(url, data=json.dumps(data), headers=headers)
+
+    queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + userId + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+    executeDBCommand(conn, cur, queryStr)
+    
+    print 'Calorie message sent'
 
 def calcCalories():
     userId = promptForUserId()
@@ -277,7 +295,8 @@ def printOptions():
     print "\n0: Set-up an entire new user"
     print "1: Change existing user's information"
     print "2: Send daily reminder for a specific day"
-    print "3: Add exercise or food for a user\n"
+    print "3: Add exercise or food for a user"
+    print "4: I have added x calories\n"
 
 if __name__ == '__main__':
 
@@ -301,6 +320,8 @@ if __name__ == '__main__':
             sendDaily()
         elif category == '3':
             addInfo()
+        elif category == '4':
+            sendCal()
         elif category == 'q':
             break
         else:

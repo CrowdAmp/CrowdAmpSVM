@@ -127,8 +127,8 @@ def displayTopFive(influencerName, phrase, messageid, otherId, userId):
         phrasegroupid = dbdata[index][0]
 
     if index == 1 and influencerName == 'indibot':
-    	sendCal(userId)
-    	phrasegroupid = otherId
+        sendCal(userId)
+        phrasegroupid = otherId
     queryStr = "SELECT phrasegroup FROM unprocessedmessages WHERE userid = (SELECT userid from unprocessedmessages WHERE id = " + str(messageid) + ");"
     executeDBCommand(conn, cur, queryStr)
     previousResponses = cur.fetchall()
@@ -428,6 +428,46 @@ def groupQuestions():
         if len(messageinfo) == 0:
             print 'No more uncategorized messages for this influencer \n'
             break
+        queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE userid = '" + messageinfo[0][3] + "' AND phrasegroup = "+ str(uncategorizedId) +";"
+        executeDBCommand(conn, cur, queryStr)
+        mid = printFullConversation(conn, cur, messageinfo, True)
+        if mid != -1:
+        #print '\n'
+        #print 'Message ID: ' + str(messageinfo[0][0])
+        #print 'Context:' + messageinfo[0][5]
+        #print messageinfo[0][1] + '\n' 
+        # Select and display top 5
+            quit = displayTopFive(influencerName, messageinfo[0][1], mid, otherId, str(messageinfo[0][3]))
+        #quit = raw_input("Successfully categorized. Type q to quit, u to undo a previous classification, or enter to continue: ")
+            if quit == 'q':
+                requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+                break
+            elif quit == 'u':
+                requeueMessage(conn, cur, messageinfo[0][0], uncategorizedId)
+                recategorizePrevious(conn, cur)
+
+def groupPrem():
+    global conn
+    global cur
+    print '\nEnter number that corresponds to question group\n'
+    influencerName = promptForInfluencerName()
+    print '\n'
+    if influencerName == "-1":
+        return
+    uncategorizedId = getUncategorized(conn, cur, influencerName)
+    otherId = getOtherId(conn, cur, influencerName)
+
+    while True:
+        #queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE sentbyuser = 'True' AND influencerid = '" + influencerName + "' AND phrasegroup = " + str(uncategorizedId) + " ORDER BY timesent desc LIMIT 1) RETURNING *;"
+        queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE id = (SELECT id FROM unprocessedmessages WHERE id > 94531 AND sentbyuser = 'True' AND influencerid = '" + influencerName + "' AND phrasegroup = " + str(uncategorizedId) + " ORDER BY timesent LIMIT 1) RETURNING *;"
+        executeDBCommand(conn, cur, queryStr)
+        messageinfo = cur.fetchall()
+        if len(messageinfo) == 0:
+            print 'No more uncategorized messages for this influencer \n'
+            break
+        file = open('prem.txt', 'r')
+        if str(messageinfo[0][3]) not in file.read():
+            continue
         queryStr = "UPDATE unprocessedmessages SET phrasegroup = -1 WHERE userid = '" + messageinfo[0][3] + "' AND phrasegroup = "+ str(uncategorizedId) +";"
         executeDBCommand(conn, cur, queryStr)
         mid = printFullConversation(conn, cur, messageinfo, True)
@@ -1124,7 +1164,8 @@ def printOptions():
     print "21: Tweet"
     print "22: Add data"
     print "23: Edit/Delete/Move-to/Add overflow response"
-    print "24: Send infinite\n"
+    print "24: Send infinite"
+    print "25: Group premium members only\n"
     
 
 if __name__ == '__main__':
@@ -1189,6 +1230,8 @@ if __name__ == '__main__':
             updateAltCategory()
         elif category == "24":
             sendInfinite()
+        elif category == "25":
+            groupPrem()
         else:
             break
 

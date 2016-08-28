@@ -212,6 +212,59 @@ def sendDaily():
         executeDBCommand(conn, cur, queryStr)
     print 'Successfully sent reminders\n'
 
+def sendErr():
+    global conn
+    global cur
+
+    f = open('prem.txt', 'r')
+
+    for user in f:
+        user = str(user)
+        message = "Hey, I am really sorry that I have not been able to answer all of your messages. Unfortunately, I am having some technical difficulties. :("
+        message = message.replace("'", "''")
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + user + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+
+        message = "I am working very hard to get everything working, and I should be up and running again on two or three weeks."
+        message = message.replace("'", "''")
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + user + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+
+        message = "I feel really bad about this trouble, so to make it up to you, once I am up and running again, I am going to give you Indi Pro free for life! :D"
+        message = message.replace("'", "''")
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + user + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+
+        message = "All you have to do is send me your email, and follow the instructions on this webpage to unsubscribe from apple payments. http://tinyurl.com/IndiUnsubscribe"
+        message = message.replace("'", "''")
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + user + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+
+        message = "I will remember you, and once I am working again, I will send you a message so we can get started on your fitness goals!"
+        message = message.replace("'", "''")
+        data = { "content" : message, "influencerId" : "indibot", "type": "text", "userId" : user, "mediaDownloadUrl" : ""}
+        url = 'https://fierce-forest-11519.herokuapp.com/shouldSendMessageToNumber'
+        headers = {'content-type': 'application/json'}
+        requests.post(url, data=json.dumps(data), headers=headers)
+        queryStr = "INSERT INTO unprocessedmessages VALUES (DEFAULT, '" + message + "', 'indibot', '" + user + "', DEFAULT, 'False', 'text', 'False', DEFAULT, DEFAULT, DEFAULT, DEFAULT, 'False');"
+        executeDBCommand(conn, cur, queryStr)
+
 def addInfo():
     global conn
     global cur 
@@ -322,6 +375,8 @@ if __name__ == '__main__':
             addInfo()
         elif category == '4':
             sendCal()
+        elif category == '7':
+            sendErr()
         elif category == 'q':
             break
         else:
